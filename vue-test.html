@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+
+<style>
+  .v-main__wrap{
+    background-color: #eeeeee;
+  }
+</style>
+
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  </head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-main>
+        <v-container>
+          <template>
+            <v-container fluid>
+              <h2 class="text-center">Bitcoin Price Today</h2>
+              <v-select
+                v-model="selectedCurrencies"
+                :items="items"
+                :item-text="item => item.description"
+                label="Select a currency"
+                multiple
+                return-object
+              >
+                <template v-slot:prepend-item>
+                  <v-list-item
+                    ripple
+                    @mousedown.prevent
+                    @click="toggle"
+                  >
+                    <v-list-item-action>
+                      <v-icon :color="selectedCurrencies.length > 0 ? 'indigo darken-4' : ''">
+                        {{ icon }}
+                      </v-icon>
+                    </v-list-item-action>
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        Select All
+                      </v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-divider class="mt-2"></v-divider>
+                </template>
+                <template v-slot:append-item>
+                  <v-divider class="mb-2"></v-divider>
+                  <v-list-item disabled>
+                    <v-list-item-avatar color="grey lighten-3">
+                      <v-icon>
+                        mdi-currency-usd
+                      </v-icon>
+                    </v-list-item-avatar>
+          
+                    <v-list-item-content v-if="activeAllCurrencies">
+                      <v-list-item-title>
+                        All selected
+                      </v-list-item-title>
+                    </v-list-item-content>
+          
+                    <v-list-item-content v-else-if="someCurrencies">
+                      <v-list-item-title>
+                        Selected
+                      </v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ selectedCurrencies.length }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+          
+                    <v-list-item-content v-else>
+                      <v-list-item-title>
+                        Nothing selected
+                      <v-list-item-subtitle>
+                        Go ahead, make a selection above!
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                </template>
+              </v-select>
+              <div>
+                <v-col v-for="item in selectedCurrencies" :key="item.code" cols="12">
+                  <v-card
+                    color="#757575"
+                    dark
+                  >
+                    <v-card-title class="text-h5 justify-space-between">
+                      <div class="pa-3">{{item.description}} </div>                      
+                      <div class="pa-3"> Price Bitcoin today: {{item.rate_float}}</div>                      
+                      <div class="pa-3"> Code: {{item.code}}</div>                      
+                    </v-card-title>
+                </v-col>                
+              </div>
+            </v-container>
+          </template>
+        </v-container>
+      </v-main>
+    </v-app>
+  </div>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data () {
+        return {
+          items: [],
+          selectedCurrencies: [],
+        }
+      },
+      mounted () {
+        axios
+          .get('https://api.coindesk.com/v1/bpi/currentprice.json')
+          .then(response => {
+            this.items = Object.keys(response.data.bpi).map((key) => {
+              return response.data.bpi[key]
+              });              
+          });
+      },
+      computed: {
+        activeAllCurrencies () {
+          return this.selectedCurrencies.length === this.items.length
+        },
+        someCurrencies () {
+          return this.selectedCurrencies.length > 0 && !this.activeAllCurrencies
+        },
+        icon () {
+          if (this.activeAllCurrencies) return 'mdi-close-box'
+          if (this.someCurrencies) return 'mdi-minus-box'
+          return 'mdi-checkbox-blank-outline'
+        },
+      },
+      methods: {
+        toggle () {
+          this.$nextTick(() => {
+            if (this.activeAllCurrencies) {
+              this.selectedCurrencies = []
+            } else {
+              this.selectedCurrencies = this.items.slice()
+            }
+          })
+        },
+      },
+    })
+  </script>
+</body>
+</html>
